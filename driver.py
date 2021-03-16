@@ -10,34 +10,34 @@ def feature_search_demo(data_list):
     num_lines = len(data_list)
     num_features = len(data_list[0])
 
+    print('Beginning search.\n')
+
     for i in range(0, num_lines):
-        print('-' * 25)
-        print(f'On the %d level of the search tree' % (i + 1))
         feature_to_add_at_this_level = None
 
         for k in range(1, num_features):
             if k not in current_set_of_features:
-                print(f'--Considering adding the %s feature' % k)
                 accuracy = leave_one_out_cross_validation(data_list, current_set_of_features, k, num_lines, num_features)
+                print_set = deepcopy(current_set_of_features)
+                print_set.add(k)
+                print(f'Using feature(s) %s accuracy is {accuracy * 100:.2f}%%' % (print_set))
 
                 if accuracy > best_accuracy_so_far:
                     best_accuracy_so_far = accuracy
                     feature_to_add_at_this_level = k
         
         if feature_to_add_at_this_level is not None:
-            print(f'On level %s i added feature %s to current set' % (i + 1, feature_to_add_at_this_level))
             current_set_of_features.add(feature_to_add_at_this_level)
             current_dict_of_features[feature_to_add_at_this_level] = best_accuracy_so_far
+            print(f'\nFeature set %s was best, accuracy is {best_accuracy_so_far * 100:.2f}%%\n' % current_set_of_features)
         elif len(current_set_of_features) == num_features:
             print('All features added')
             break
         else:
-            print('Accuracy is decreasing, stopping the search here.')
+            print('\nWarning: Accuracy is decreasing, stopping the search here.')
             break
     
-    print('-' * 25)
-
-    print(f'Best set of features: %s, with accuracy: {best_accuracy_so_far * 100:.2f}' % (current_set_of_features))
+    print(f'\nFinished search!! The best feature subset is %s, which has an accuracy of {best_accuracy_so_far * 100:.2f}%%' % current_set_of_features)
 
     return current_dict_of_features
 
@@ -48,33 +48,35 @@ def backward_search(data_list):
     current_dict_of_features = {}
     best_accuracy_so_far = 0
 
+    print('Beginning search.\n')
+
     for i in range(0, num_lines):
-        print('-' * 25)
-        print(f'On the %d level of the search tree' % (i + 1))
-        print(f'Current set: %s' % current_set_of_features)
         feature_to_remove_at_this_level = None
 
         for k in range(1, num_features):
             if k in current_set_of_features:
-                print(f'--Considering removing the %s feature' % k)
                 accuracy = leave_one_out_cross_validation(data_list, current_set_of_features, (-1 * k), num_lines, num_features)
+                print_set = deepcopy(current_set_of_features)
+                print_set.remove(k)
+                print(f'Using feature(s) %s accuracy is {accuracy * 100:.2f}%%' % (print_set))
 
                 if accuracy > best_accuracy_so_far:
                     best_accuracy_so_far = accuracy
                     feature_to_remove_at_this_level = k
         
         if feature_to_remove_at_this_level is not None:
-            print(f'On level %s i removed feature %s of current set' % (i + 1, feature_to_remove_at_this_level))
             current_set_of_features.remove(feature_to_remove_at_this_level)
             current_dict_of_features[feature_to_remove_at_this_level] = best_accuracy_so_far
+            print(f'\nFeature set %s was best, accuracy is {best_accuracy_so_far * 100:.2f}%%\n' % current_set_of_features)
         elif len(current_set_of_features) == num_features:
             print('All features added')
             break
         else:
-            print('Accuracy is decreasing, stopping the search here.')
+            print('\nWarning: Accuracy is decreasing, stopping the search here.')            
             break
 
-        print(f'Best set of features: %s, with accuracy: {best_accuracy_so_far * 100:.2f}' % (current_set_of_features))
+    print(f'\nFinished search!! The best feature subset is %s, which has an accuracy of {best_accuracy_so_far * 100:.2f}%%' % current_set_of_features)
+
     return current_dict_of_features
     
 
@@ -135,7 +137,7 @@ def selection():
             print('\nSelected the Forward Selection algorithm.')
             break
         elif algo_selection == '2':
-            print('\nSelected the Backward Elemination algorithm.')
+            print('\nSelected the Backward Elimination algorithm.')
             break
         else:
             print('Please select either "1" or "2".')
@@ -143,24 +145,19 @@ def selection():
     return file_selection, algo_selection 
 
 def main():
-    # file_name = 'data/CS170_small_special_testdata__95.txt'
-    # file_name = 'data/CS170_small_special_testdata__96.txt'
-    # file_name = 'data/CS170_small_special_testdata__97.txt'
-    # file_name = 'data/CS170_small_special_testdata__98.txt'
-    # file_name = 'data/CS170_small_special_testdata__99.txt'
-    # file_name = 'data/CS170_SMALLtestdata__33.txt'
-    # file_name = 'data/CS170_largetestdata__38.txt'
+    print("Welcome to Juan's Feature Selection Algorithm.")
     file_name, user_selection = selection()
     df = pd.read_csv(file_name, delimiter='\s+', header=None)
     df_list = df.values.tolist()
+
+    print(f'\nThe data has %d features (not including the class attribute), with %d instances\n' % (len(df_list[0]) - 1, len(df_list)))
     start = timeit.default_timer()
     if user_selection == '1':
         features = feature_search_demo(df_list[:])
     elif user_selection == '2':
         features = backward_search(df_list[:])
     end = timeit.default_timer()
-    print(f'Results: %s' % features)
-    print(f'Time to run: %s' % (end - start))
+    print(f'Time to complete the search was {end - start:.2f} seconds')
 
 if __name__ == '__main__':
     main()
